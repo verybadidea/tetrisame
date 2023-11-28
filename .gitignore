@@ -1,0 +1,6 @@
+# ignore executables
+tetrisame
+tetrisame.exe
+
+# ignore file in directory
+old/

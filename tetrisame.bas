@@ -33,8 +33,8 @@ dim as game_type game
 
 screenres SCREEN_W, SCREEN_H, 32
 
-'randomize(timer())
-randomize (88)
+randomize(timer())
+'randomize (88)
 game.init()
 game.loop_()
 game.gameOver()

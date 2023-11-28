@@ -37,13 +37,10 @@ Start with dominoes, 2 colors, get 100 points, now clear board, next level: 3 co
 
 === To do ===
 
-Scoring system
-No float: Drop leftover floating tiles. See: stirBlocks().
-If floating tiles are dropped after tetro count, redo tetro check.
+Show points overlay if score increased + sound
 Bonus point + message for clear field
 Increase colors each level. What is a level? Clear field and >100 points? Or after time?
 Pause button + Screen change (darker)
-Game.redraw = clear + bg + field + piece + score + waiting piece(s)
 line made: bland to backgrond/black. And smooth field drop
 remove intelligency from drawSquare/tile
 move gameloop to game.bi AND more stuff to board
@@ -55,7 +52,8 @@ Blink tiles to be removed from board
 Better keyboard handling
 Color blind symbols
 IMAGE MANIP FUCTIONS
-Clean up old stuuf + improve coments
+Clean up old stuff + improve coments
+allow pause in all states
 
 === Rejected ===
 

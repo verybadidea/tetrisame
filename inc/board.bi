@@ -252,7 +252,7 @@ end sub
 'find and mark neighbouring blocks sections
 function board_type.checkTetro() as integer
 	dim as int2d tetroPos(0 to MAX_TETRO-1)
-	dim as integer xi, yi, numTiles, numTetro = 0
+	dim as integer xi, yi, numTiles, numTetro = 0, score = 0
 	dim as ulong c
 	'loop bottom to top, find and count tetrominoes+ (4-tile piece or larger)
 	for yi = GRID_YSZ-1 to -2 step -1
@@ -263,6 +263,7 @@ function board_type.checkTetro() as integer
 				if numTiles >= 4 then
 					tetroPos(numTetro) = type(xi, yi)
 					numTetro += 1
+					score += (numTiles - 3) '4 -> 1, 5 -> 2, etc.
 				end if
 			end if
 		next
@@ -280,7 +281,7 @@ function board_type.checkTetro() as integer
 	next
 	'if no tetrominoes+ found, clear marks
 	'if numTetro = 0 then clearMarked()
-	return numTetro
+	return score
 end function
 
 sub board_type.removeTetro()

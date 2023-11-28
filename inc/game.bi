@@ -42,6 +42,7 @@ type game_type
 	dim as bcl_type bcl 'block collection list
 	'public: 'TEMPORARY until gameloop in here game.bi
 	dim as board_type board
+	dim as integer score
 	public:
 	declare sub init()
 	declare function loop_() as integer
@@ -76,7 +77,7 @@ function game_type.loop_() as integer
 	dim as all_pieces allPieces
 	'dim as integer dropActive
 	'dim as integer requestNewPiece = true
-	dim as integer score, lineCount, tetroCount, floatCount
+	dim as integer tetroScore, floatCount
 
 	playState = psNewPiece
 	nextPiece.init(-1, allPieces)
@@ -163,9 +164,9 @@ function game_type.loop_() as integer
 		
 		if playState = psCheckBoard then
 			'piece has been dropped onto something
-			tetroCount = board.checkTetro() 'and mark for visualisation
-			if tetroCount > 0 then
-				clearTmr.start(0.800) 'remove section after this time
+			tetroScore = board.checkTetro() 'and mark for visualisation
+			if tetroScore > 0 then
+				clearTmr.start(0.500) 'remove section after this time
 				playState = psWaitClearLine
 			else
 				playState = psNewPiece
@@ -174,12 +175,12 @@ function game_type.loop_() as integer
 
 		if playState = psWaitClearLine then
 			if clearTmr.ended() then
-				score += tetroCount
+				score += tetroScore
 				board.removeTetro() 'marked -> free
 				'
 				floatCount = checkFloat() 'find + remove + reserve + build list
 				if floatCount > 0 then
-					clearTmr.start(0.500)
+					clearTmr.start(0.250)
 					playState = psFloatDrop
 				else
 					playState = psNewPiece
@@ -192,7 +193,7 @@ function game_type.loop_() as integer
 				bcl.update(board) 'move down and/or copy bl to board
 				floatCount = bcl.getUsed()
 				if floatCount > 0 then
-					clearTmr.start(0.500) 'stay in this play state
+					clearTmr.start(0.250) 'stay in this play state
 				else
 					'playState = psNewPiece
 					'No recheck tetro !!!!!!
@@ -204,10 +205,8 @@ function game_type.loop_() as integer
 		screenlock
 		clearScreen()
 		drawScene()
-		locate 2, 2: print "Score:"; score;
-		locate 4, 2: print "State:"; playState; " " ;playStateStr(playState)
-		locate 6, 2: print "Time: "; time;
-		locate 8, 2: print "floatCount:"; floatCount;
+		'locate 6, 2: print "Time: "; time;
+		'locate 8, 2: print "floatCount:"; floatCount;
 		screenunlock
 		sleep 1,1
 	loop until quit = 1
@@ -219,6 +218,8 @@ sub game_type.drawScene()
 	board.drawBoard()
 	bcl.drawBlocks(board)
 	showPiece(nextPiece, board.getInfo(3) + 50, 50, 32)
+	locate 2, 2: print "Score:"; score;
+	locate 4, 2: print "State:"; playState; '" " ;playStateStr(playState)
 	if activePiece.alive then drawPiece(activePiece)
 	if playState = psPaused then showMsg("PAUSED", C_WHITE, C_DARK_RED)
 end sub
