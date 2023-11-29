@@ -53,8 +53,8 @@ type game_type
 	declare function piecePossible(piece as piece_type) as integer
 	declare sub wallKick(piece as piece_type)
 	declare sub copyToBoard(piece as piece_type)
-	declare sub drawPiece(piece as piece_type)
-	declare sub showPiece(piece as piece_type, xOffs as integer, yOffs as integer, tileSize as integer)
+	declare sub drawPieceGrid(piece as piece_type)
+	declare sub showPieceFree(piece as piece_type, xOffs as integer, yOffs as integer, tileSize as integer)
 	declare function CheckFloat() as integer
 	declare function checkNeighbours(x as integer, y as integer, bcNum as integer) as integer
 end type
@@ -75,8 +75,6 @@ function game_type.loop_() as integer
 	dim as timer_type gravTmr, clearTmr
 	dim as piece_type movedPiece
 	dim as all_pieces allPieces
-	'dim as integer dropActive
-	'dim as integer requestNewPiece = true
 	dim as integer tetroScore, floatCount
 
 	playState = psNewPiece
@@ -85,10 +83,6 @@ function game_type.loop_() as integer
 		keyCode = pollKeyCode()
 
 		if playState = psNewPiece then
-			'if requestNewPiece then
-				'~ 'requestNewPiece = false
-				'~ 'activePiece.init(type(game.board.getWidth()\2, 0), -1, 0, -1)
-				'activePiece.init(-1, allPieces)
 				activePiece = nextPiece
 				nextPiece.init(-1, allPieces)
 				if not piecePossible(activePiece) then quit = 1
@@ -119,11 +113,9 @@ function game_type.loop_() as integer
 				case KEY_RI
 					movedPiece.position.x += 1
 				case KEY_UP
-					'movedPiece.rot = (movedPiece.rot + 1) mod NUM_ORIENT
 					movedPiece.rotRight()
 					wallKick(movedPiece)
 				case KEY_DN
-					'movedPiece.rot = (movedPiece.rot + 3) mod NUM_ORIENT
 					movedPiece.rotLeft()
 					wallKick(movedPiece)
 				case KEY_SPACE
@@ -157,7 +149,6 @@ function game_type.loop_() as integer
 					copyToBoard(activePiece)
 					activePiece.disable() 
 					playState = psCheckBoard
-					'dropActive = false
 				end if
 			end if
 		end if
@@ -195,8 +186,6 @@ function game_type.loop_() as integer
 				if floatCount > 0 then
 					clearTmr.start(0.250) 'stay in this play state
 				else
-					'playState = psNewPiece
-					'No recheck tetro !!!!!!
 					playState = psCheckBoard
 				end if
 			end if
@@ -217,10 +206,10 @@ sub game_type.drawScene()
 	put (0, 0), bgImg.pFbImg, pset
 	board.drawBoard()
 	bcl.drawBlocks(board)
-	showPiece(nextPiece, board.getInfo(3) + 50, 50, 32)
+	showPieceFree(nextPiece, board.getInfo(3) + 50, 50, 32) 'NEXT piece indicator
 	locate 2, 2: print "Score:"; score;
 	locate 4, 2: print "State:"; playState; '" " ;playStateStr(playState)
-	if activePiece.alive then drawPiece(activePiece)
+	if activePiece.alive then drawPieceGrid(activePiece)
 	if playState = psPaused then showMsg("PAUSED", C_WHITE, C_DARK_RED)
 end sub
 
@@ -244,7 +233,7 @@ end sub
 
 'Game over animation, fill board to to bottom
 sub game_type.gameOver()
-	dim as int2d boardSize = board.getSize()
+	dim as int2d boardSize = board.getGridSize()
 	dim as tile_type tile
 	for yi as integer = boardSize.y-1 to 0 step -1
 		for xi as integer  = 0 to boardSize.x-1
@@ -300,16 +289,17 @@ sub game_type.copyToBoard(piece as piece_type)
 end sub
 
 'draw teris 1 piece, multiple squares, on board
-sub game_type.drawPiece(piece as piece_type)
+sub game_type.drawPieceGrid(piece as piece_type)
 	for iTile as integer = 0 to N_TILES-1
 		dim as int2d absTilePos = piece.getTilePos(iTile)
 		dim as ulong c = piece.tileColor(iTile)
 		board.drawTilePos(absTilePos, type(BLOCK_PIECE, c))
 	next
+	board.drawRotPos(piece.getRotPos(), &hffffffff)
 end sub
 
 'display anyway, at specified location and tile size
-sub game_type.showPiece(piece as piece_type, xScrn as integer, yScrn as integer, tileSize as integer)
+sub game_type.showPieceFree(piece as piece_type, xScrn as integer, yScrn as integer, tileSize as integer)
 	for iTile as integer = 0 to N_TILES-1
 		dim as int2d tilePos = piece.tilePos(iTile)
 		dim as ulong c = piece.tileColor(iTile)

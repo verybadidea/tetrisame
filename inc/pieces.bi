@@ -34,6 +34,8 @@ type all_pieces
 	}
 	dim as int2d offsetPos(N_SHAPES-1) = _
 		{( 0, 0), ( 0, 0), ( 0, 0), ( 1, 0), ( 0, 0), ( 0, 0), ( 0, 0)}
+	dim as sgl2d rotPos(N_SHAPES-1) = _
+		{( 2.0, 2.0), ( 1.5, 1.5), ( 1.5, 1.5), ( 1.0, 1.0), ( 1.5, 1.5), ( 1.5, 1.5), ( 1.5, 1.5)}
 	dim as integer areaSize(N_SHAPES-1) = _
 		{4, 3, 3, 2, 3, 3, 3}
 end type

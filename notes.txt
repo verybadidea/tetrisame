@@ -29,31 +29,35 @@ https://tetris.wiki/Super_Rotation_System
 Tetris: colors: makes tetris blocks. Extra 4 blocks, not 5.
 Pieces 4 of groter Anders te moeilijk.
 Remove only lines of same color? Nearly impossible?
-No automatic drop? Increase speed. Stop drop on <space> release
-Increase colors each level.
+No automatic drop? Increase speed.
+Increase colors each level at 25 points?
 More complex point system
 Use trominoes/triominoes instead of terominoes?
 Start with dominoes, 2 colors, get 100 points, now clear board, next level: 3 colors.
 
 === To do ===
 
+Display rotation point
+Stop drop on <space> release? (needs multikey, not inkey)
 Show points overlay if score increased + sound
 Bonus point + message for clear field
 Increase colors each level. What is a level? Clear field and >100 points? Or after time?
 Pause button + Screen change (darker)
-line made: bland to backgrond/black. And smooth field drop
-remove intelligency from drawSquare/tile
+Tetro made: blend to backgrond/black
+remove intelligence from drawSquare/tile
 move gameloop to game.bi AND more stuff to board
 7-bag Random Generator
 Korobeiniki music
 Sounds: piece droped, kicked, score, game over, down tick, etc.
-Ghost piece as option form menu / toggle bottom
+Ghost piece as option from menu / toggle bottom
 Blink tiles to be removed from board
 Better keyboard handling
 Color blind symbols
 IMAGE MANIP FUCTIONS
 Clean up old stuff + improve coments
 allow pause in all states
+Nice fonts
+Highest score to file
 
 === Rejected ===
 

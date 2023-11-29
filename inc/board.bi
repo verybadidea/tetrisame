@@ -35,10 +35,11 @@ type board_type
 	declare sub drawBoard()
 	declare sub drawTile(x as integer, y as integer, tile as tile_type)
 	declare sub drawTilePos(pos_ as int2d, tile as tile_type)
+	declare sub drawRotPos(pos_ as sgl2d, c as ulong)
 	declare function onBoard(x as integer, y as integer) as integer
 	declare function getWidth() as integer
 	declare function getHeight() as integer
-	declare function getSize() as int2d
+	declare function getGridSize() as int2d
 	declare function getInfo(id as integer) as integer
 	declare sub setTile(x as integer, y as integer, tile as tile_type)
 	declare sub setTileType(x as integer, y as integer, tt as TILE_T)
@@ -117,6 +118,17 @@ sub board_type.drawTilePos(pos_ as int2d, tile as tile_type)
 	drawTile(pos_.x, pos_.y, tile)
 end sub
 
+'show rotational point on board
+sub board_type.drawRotPos(pos_ as sgl2d, c as ulong)
+	if inRange(pos_.x, 0, GRID_XSZ-1) and inRange(pos_.y, 0, GRID_YSZ-1) then
+		dim as integer xScrn = GRID_XOFFS + pos_.x * GRID_SIZE
+		dim as integer yScrn = GRID_YOFFS + pos_.y * GRID_SIZE
+		circle (xScrn, yScrn), 6,c
+		circle (xScrn, yScrn), 5,c
+		circle (xScrn, yScrn), 4,c
+	end if
+end sub
+
 function board_type.onBoard(x as integer, y as integer) as integer
 	if not inRange(x, 0, GRID_XSZ-1) then return false
 	if not inRange(y, -2, GRID_YSZ-1) then return false
@@ -131,7 +143,7 @@ function board_type.getHeight() as integer
 	return GRID_YSZ
 end function
 
-function board_type.getSize() as int2d
+function board_type.getGridSize() as int2d
 	return type(GRID_XSZ, GRID_YSZ)
 end function
 
@@ -307,59 +319,3 @@ function board_type.floodFill(x as integer, y as integer, c as ulong) as integer
 	if onBoard(x, y - 1) andalso tile(x, y - 1) = matchTile then count += floodFill(x, y - 1, c)
 	return count + 1 'should return at least 1 if nothing else is found
 end function
-
-'~ 'Drop all pieces not touching? Only floating parts? most natural!
-'~ 'Make block lists & mark --> use additional map or reset afterwards?
-'~ 'wait for all block lists to finish dropping? Easier with current dynamic list
-'~ 'then check for complete lines
-'~ function game_type.stirBlocks() as integer
-	'~ 'create lists of blocks, loop all blocks
-	'~ dim as integer bcNum, canMove, tType, count = 0
-	'~ dim as int2d blockPos
-	'~ for yi as integer = 0 to board.Y_DIM-1
-		'~ for xi as integer = 0 to board.X_DIM-1
-			'~ if board.getType(type(xi, yi)) = BLOCK_PIECE then
-				'~ bcNum = bl.alloc() 'start a block list
-				'~ with bl.bc(bcNum)
-					'~ .speed = type(0, V_STIR_BLOCK)
-					'~ .relPosCurrent = type(0, 0)
-					'~ .absPosSource = type(xi, yi)
-					'~ .relPosTarget = type(0, 1)
-					'~ .addBlock(type(0, 0), board.getBlock(type(xi, yi))) 'first one at rel. pos 0,0
-				'~ end with
-				'~ checkBlocks(xi, yi, bcNum) 'resurve block search
-				'~ 'check if dropable (all piece of section nothing below?)
-				'~ canMove = 1
-				'~ for iBlock as integer = 0 to bl.bc(bcNum).getSize() - 1
-					'~ blockPos = toCint2d(bl.bc(bcNum).getAbsPosBlocks(iBlock))
-					'~ tType = board.getType(type(blockPos.x, blockPos.y + 1))
-					'~ if not(tType = BLOCK_FREE or tType = BLOCK_CHECK) then
-						'~ canMove = 0
-						'~ exit for
-					'~ end if
-				'~ next
-				'~ if canMove = 1 then
-					'~ 'remove from board + reserve position
-					'~ for iBlock as integer = 0 to bl.bc(bcNum).getSize() - 1
-						'~ blockPos = toCint2d(bl.bc(bcNum).getAbsPosBlocks(iBlock))
-						'~ board.setType(blockPos, BLOCK_FREE)
-						'~ board.setType(type(blockPos.x, blockPos.y + 1), BLOCK_RES)
-					'~ next
-					'~ count += 1
-				'~ else
-					'~ bl.bc(bcNum).cleanUp() 'remove from list
-				'~ end if
-			'~ end if
-		'~ next
-	'~ next
-	'marked --> piece
-	'~ for yi as integer = 0 to board.Y_DIM-1
-		'~ for xi as integer = 0 to board.X_DIM-1
-			'~ if board.getType(type(xi, yi)) = BLOCK_CHECK then
-				'~ board.setType(type(xi, yi), BLOCK_PIECE)
-			'~ end if
-		'~ next
-	'~ next
-	'~ 'note: count can also be obtained form list length
-	'~ return count
-'~ end function

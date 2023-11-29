@@ -5,12 +5,14 @@ type piece_type
 	dim as ulong tileColor(0 to 3)
 	dim as int2d tilePos(0 to 3) 'relative to piecePos
 	dim as int2d offsetPos
+	dim as sgl2d rotPos
 	dim as integer areaSize
 	public:
 	declare sub init(shape as integer, allPieces as all_pieces)
 	declare sub rotRight()
 	declare sub rotLeft()
 	declare function getTilePos(tileNum as integer) as int2d
+	declare function getRotPos() as sgl2d
 	declare sub disable()
 end type
 
@@ -22,6 +24,7 @@ sub piece_type.init(shape as integer, allPieces as all_pieces)
 		tilePos(iTile) = allPieces.baseTilePos(shape, iTile)
 	next
 	offsetPos = allPieces.offsetPos(shape)
+	rotPos = allPieces.rotPos(shape)
 	areaSize = allPieces.areaSize(shape)
 	position.x = 3 + offsetPos.x 'for placement on a 10 wide board, left alignment
 	position.y = -1 + offsetPos.y 'TO BE DEFINED !!!
@@ -51,6 +54,10 @@ end sub
 
 function piece_type.getTilePos(tileNum as integer) as int2d
 	return position + tilePos(tileNum)
+end function
+
+function piece_type.getRotPos() as sgl2d
+	return toSgl2d(position) + rotPos
 end function
 
 sub piece_type.disable()
