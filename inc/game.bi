@@ -14,7 +14,7 @@ end sub
 enum playStateEnum
 	psNewPiece
 	psActivePlay
-	psWaitDrop
+	psWaitDrop 'fast drop
 	psCheckBoard
 	psWaitClearLine
 	psFloatDrop
@@ -38,7 +38,7 @@ type game_type
 	dim as piece_type piece
 	dim as image_type bgImg
 	dim as playStateEnum playState
-	dim as piece_type activePiece, nextPiece
+	dim as piece_type activePiece, nextPiece, ghostPiece
 	dim as bcl_type bcl 'block collection list
 	'public: 'TEMPORARY until gameloop in here game.bi
 	dim as board_type board
@@ -54,9 +54,11 @@ type game_type
 	declare sub wallKick(piece as piece_type)
 	declare sub copyToBoard(piece as piece_type)
 	declare sub drawPieceGrid(piece as piece_type)
+	declare sub drawGhostPiece(piece as piece_type)
 	declare sub showPieceFree(piece as piece_type, xOffs as integer, yOffs as integer, tileSize as integer)
 	declare function CheckFloat() as integer
 	declare function checkNeighbours(x as integer, y as integer, bcNum as integer) as integer
+	declare function calcGhostPiece(playPiece as piece_type) as piece_type
 end type
 
 sub game_type.init()
@@ -73,7 +75,7 @@ function game_type.loop_() as integer
 	dim as integer quit = 0
 	dim as ushort keyCode
 	dim as timer_type gravTmr, clearTmr
-	dim as piece_type movedPiece
+	dim as piece_type movedPiece 'temporary copy to test movement
 	dim as all_pieces allPieces
 	dim as integer tetroScore, floatCount
 
@@ -83,11 +85,11 @@ function game_type.loop_() as integer
 		keyCode = pollKeyCode()
 
 		if playState = psNewPiece then
-				activePiece = nextPiece
-				nextPiece.init(-1, allPieces)
-				if not piecePossible(activePiece) then quit = 1
-				gravTmr.start(0.500)
-			'end if
+			activePiece = nextPiece
+			ghostPiece = calcGhostPiece(activePiece)
+			nextPiece.init(-1, allPieces)
+			if not piecePossible(activePiece) then quit = 1
+			gravTmr.start(0.500)
 			playState = psActivePlay
 		end if
 
@@ -107,17 +109,22 @@ function game_type.loop_() as integer
 		end if
 
 		if playState = psActivePlay then
+			dim as integer possibleChange = 0
 			select case keyCode
 				case KEY_LE
 					movedPiece.position.x -= 1
+					possibleChange = 1
 				case KEY_RI
 					movedPiece.position.x += 1
+					possibleChange = 1
 				case KEY_UP
 					movedPiece.rotRight()
 					wallKick(movedPiece)
+					possibleChange = 1
 				case KEY_DN
 					movedPiece.rotLeft()
 					wallKick(movedPiece)
+					possibleChange = 1
 				case KEY_SPACE
 					playState = psWaitDrop 'disable user piece control
 					gravTmr.start(0.025) 'drop faster
@@ -129,11 +136,15 @@ function game_type.loop_() as integer
 				case else
 				'...
 			end select
-			'check move possible
-			if piecePossible(movedPiece) then
-				activePiece = movedPiece 'update position
-			else
-				movedPiece = activePiece 'reset moved piece, for next step
+			'keys: left, right, up, down -> x-change or rotation
+			if possibleChange = 1 then
+				'check move possible
+				if piecePossible(movedPiece) then
+					activePiece = movedPiece 'update position
+					ghostPiece = calcGhostPiece(activePiece)
+				else
+					movedPiece = activePiece 'reset moved piece, for next step
+				end if
 			end if
 		end if
 
@@ -206,11 +217,20 @@ sub game_type.drawScene()
 	put (0, 0), bgImg.pFbImg, pset
 	board.drawBoard()
 	bcl.drawBlocks(board)
-	showPieceFree(nextPiece, board.getInfo(3) + 50, 50, 32) 'NEXT piece indicator
-	locate 2, 2: print "Score:"; score;
-	locate 4, 2: print "State:"; playState; '" " ;playStateStr(playState)
+	if menuOpt.showNext then
+		showPieceFree(nextPiece, board.getInfo(3) + 50, 50, 32) 'NEXT piece indicator
+	end if
+	draw string(10,10), "Score: " & str(score)
+	draw string(10,30), "State: " & str(playState)
+	'locate 2, 2: print "Score:"; score;
+	'locate 4, 2: print "State:"; playState; '" " ;playStateStr(playState)
 	if activePiece.alive then drawPieceGrid(activePiece)
-	if playState = psPaused then showMsg("PAUSED", C_WHITE, C_DARK_RED)
+	select case playState
+		case psPaused
+			showMsg("PAUSED", C_WHITE, C_DARK_RED)
+		case psActivePlay ', psWaitDrop
+			if menuOpt.showGhost then drawGhostPiece(ghostPiece)
+	end select
 end sub
 
 sub game_type.clearScreen()
@@ -295,7 +315,9 @@ sub game_type.drawPieceGrid(piece as piece_type)
 		dim as ulong c = piece.tileColor(iTile)
 		board.drawTilePos(absTilePos, type(BLOCK_PIECE, c))
 	next
-	board.drawRotPos(piece.getRotPos(), &hffffffff)
+	if menuOpt.showRotPoint then
+		board.drawRotPos(piece.getRotPos(), &hffffffff)
+	end if
 end sub
 
 'display anyway, at specified location and tile size
@@ -305,9 +327,23 @@ sub game_type.showPieceFree(piece as piece_type, xScrn as integer, yScrn as inte
 		dim as ulong c = piece.tileColor(iTile)
 		dim as integer x = xScrn + (tilePos.x + piece.offsetPos.x) * tileSize
 		dim as integer y = yScrn + (tilePos.y + piece.offsetPos.y) * tileSize
-		line(x, y)-step(tileSize - 2, tileSize - 2), c, bf
+		line(x+1, y+1)-step(tileSize - 3, tileSize - 3), c, b
+		line(x+2, y+2)-step(tileSize - 5, tileSize - 5), c, b
+		c = c and &hffdfdfdf
+		line(x+3, y+3)-step(tileSize - 7, tileSize - 7), c, bf
 	next
 end sub
+
+'draw on grid:
+sub game_type.drawGhostPiece(piece as piece_type)
+	for iTile as integer = 0 to N_TILES-1
+		dim as int2d absTilePos = piece.getTilePos(iTile)
+		dim as ulong c = piece.tileColor(iTile)
+		board.drawTilePos(absTilePos, type(BLOCK_GHOST, c))
+	next
+	'board.drawRotPos(piece.getRotPos(), &hffffffff)
+end sub
+
 
 'Drop all pieces not touching? Only floating parts? most natural!
 'Make block lists & mark --> use additional map or reset afterwards?
@@ -382,4 +418,13 @@ function game_type.checkNeighbours(x as integer, y as integer, bcNum as integer)
 	if board.getTileType(x, y - 1) = BLOCK_PIECE then checkNeighbours(x, y - 1, bcNum)
 	if board.getTileType(x, y + 1) = BLOCK_PIECE then checkNeighbours(x, y + 1, bcNum)
 	return 0
+end function
+
+function game_type.calcGhostPiece(playPiece as piece_type) as piece_type
+	dim as piece_type tempPiece = playPiece
+	do
+		tempPiece.position.y += 1
+	loop while piecePossible(tempPiece)
+	tempPiece.position.y -= 1
+	return tempPiece
 end function

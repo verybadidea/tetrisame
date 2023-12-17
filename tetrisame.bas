@@ -17,7 +17,15 @@
 
 const as integer SCREEN_W = 800
 const as integer SCREEN_H = SCREEN_W
-width SCREEN_W \ 8, SCREEN_H \ 16
+const as integer FONT_W = 8, FONT_H = 16
+
+type menu_options
+	dim as boolean showNext = true
+	dim as boolean showGhost = true
+	dim as boolean showRotPoint = true
+end type
+
+dim shared as menu_options menuOpt
 
 #include "inc/common.bi"
 #include "inc/int2d_sgl2d.bi"
@@ -32,6 +40,7 @@ width SCREEN_W \ 8, SCREEN_H \ 16
 dim as game_type game
 
 screenres SCREEN_W, SCREEN_H, 32
+width SCREEN_W \ FONT_W, SCREEN_H \ FONT_H
 
 randomize(timer())
 'randomize (88)
@@ -44,5 +53,6 @@ game.gameOver()
 'game.showAllPieces() '<-- This is broken, pieces too large
 'sleep 1000,1
 
-locate 4, 2: print "Game ended, press any key."
+'locate 4, 2: print "Game ended, press any key."
+draw string(10,50), "Game ended, press any key."
 waitKeyCode()

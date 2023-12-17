@@ -4,8 +4,9 @@ const as long BLOCK_FREE = 0
 const as long BLOCK_PIECE = 2
 const as long BLOCK_MARKED = 3
 'const as long BLOCK_RES = 32
-const as short BLOCK_FAIL = 64
+'const as short BLOCK_FAIL = 64
 const as short BLOCK_CHECK = 128
+const as short BLOCK_GHOST = 256
 
 const MAX_TETRO = 20 'used in tetro search
 
@@ -15,6 +16,7 @@ const MAX_TETRO = 20 'used in tetro search
 type tile_type
 	dim as TILE_T tType ', colorIdx
 	dim as TILE_C tColor
+	dim as long score
 end type
 
 operator =(byref a as tile_type, byref b as tile_type) as integer
@@ -56,6 +58,7 @@ type board_type
 	declare function checkTetro() as integer
 	declare sub removeTetro()
 	declare function floodFill(x as integer, y as integer, c as ulong) as integer
+	declare function floodFill2(x as integer, y as integer, c as ulong, score as long) as integer
 end type
 
 'Can be converted to constructor
@@ -87,24 +90,40 @@ sub board_type.drawTile(x as integer, y as integer, tile as tile_type)
 	if inRange(x, 0, GRID_XSZ-1) and inRange(y, 0, GRID_YSZ-1) then
 		dim as integer xScrn = GRID_XOFFS + x * GRID_SIZE
 		dim as integer yScrn = GRID_YOFFS + y * GRID_SIZE
-		'get color
-		dim as ulong c = &hF0F0F0
-		select case tile.tType
-		case BLOCK_PIECE, BLOCK_MARKED
-			'c = colors(tile.colorIdx)
-			c = tile.tColor
-		end select
+		dim as ulong c = &hF0F0F0, c2 'default white
 		'draw gray border always
 		line(xScrn, yScrn)-step(GRID_SIZE-1, GRID_SIZE-1), C_DARK_GRAY, b
 		select case tile.tType 
 		case BLOCK_PIECE
-			line(xScrn + 1, yScrn + 1)-step(GRID_SIZE-3, GRID_SIZE-3), c, bf
-		case BLOCK_MARKED
+			'~ c = tile.tColor
+			'~ line(xScrn + 1, yScrn + 1)-step(GRID_SIZE-3, GRID_SIZE-3), c, bf
+			c = tile.tColor
+			c2 = c and &hffdfdfdf
 			line(xScrn + 1, yScrn + 1)-step(GRID_SIZE-3, GRID_SIZE-3), c, b
 			line(xScrn + 2, yScrn + 2)-step(GRID_SIZE-5, GRID_SIZE-5), c, b
-			line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c, b
-		'~ case BLOCK_RES
-			'~ line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c, bf
+			'line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c, b
+			line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c2, bf
+		case BLOCK_MARKED
+			c = tile.tColor
+			c2 = c and &hff3f3f3f
+			line(xScrn + 1, yScrn + 1)-step(GRID_SIZE-3, GRID_SIZE-3), c, b
+			line(xScrn + 2, yScrn + 2)-step(GRID_SIZE-5, GRID_SIZE-5), c, b
+			'line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c, b
+			line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c2, bf
+			'dim as string scoreStr = iif(tile.score > 0, str(tile.score), "X")
+			if tile.score > 0 then
+				dim as string scoreStr = str(tile.score)
+				dim as long xOffset = (GRID_SIZE - FONT_W * len(scoreStr)) \ 2 + 1
+				dim as long yOffset = (GRID_SIZE - FONT_H) \ 2 + 2
+				draw string(xScrn + xOffset, yScrn + yOffset), scoreStr, c
+			end if
+		case BLOCK_GHOST
+			c = tile.tColor
+			c2 = c and &hff3f3f3f
+			line(xScrn + 1, yScrn + 1)-step(GRID_SIZE-3, GRID_SIZE-3), c, b
+			line(xScrn + 2, yScrn + 2)-step(GRID_SIZE-5, GRID_SIZE-5), c, b
+			'line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c, b
+			line(xScrn + 3, yScrn + 3)-step(GRID_SIZE-7, GRID_SIZE-7), c2, bf
 		case else
 			'not good, unknown block type
 		end select
@@ -264,7 +283,8 @@ end sub
 'find and mark neighbouring blocks sections
 function board_type.checkTetro() as integer
 	dim as int2d tetroPos(0 to MAX_TETRO-1)
-	dim as integer xi, yi, numTiles, numTetro = 0, score = 0
+	dim as long tetroScore(0 to MAX_TETRO-1)
+	dim as integer xi, yi, numTiles, numTetro = 0, totalScore = 0
 	dim as ulong c
 	'loop bottom to top, find and count tetrominoes+ (4-tile piece or larger)
 	for yi = GRID_YSZ-1 to -2 step -1
@@ -273,9 +293,11 @@ function board_type.checkTetro() as integer
 				c = tile(xi, yi).tColor
 				numTiles = floodFill(xi, yi, c)
 				if numTiles >= 4 then
-					tetroPos(numTetro) = type(xi, yi)
+					dim as integer score = (numTiles - 3) '4 -> 1, 5 -> 2, etc.
+					totalScore += score
+					tetroScore(numTetro) = score
+					tetroPos(numTetro) = type(xi, yi) 'save position (of first tile)
 					numTetro += 1
-					score += (numTiles - 3) '4 -> 1, 5 -> 2, etc.
 				end if
 			end if
 		next
@@ -288,12 +310,13 @@ function board_type.checkTetro() as integer
 		yi = tetroPos(iTetro).y
 		if tile(xi, yi).tType = BLOCK_PIECE then
 			c = tile(xi, yi).tColor
-			numTiles = floodFill(xi, yi, c)
+			'numTiles = floodFill(xi, yi, c)
+			numTiles = floodFill2(xi, yi, c, tetroScore(iTetro))
 		end if
 	next
 	'if no tetrominoes+ found, clear marks
 	'if numTetro = 0 then clearMarked()
-	return score
+	return totalScore
 end function
 
 sub board_type.removeTetro()
@@ -317,5 +340,19 @@ function board_type.floodFill(x as integer, y as integer, c as ulong) as integer
 	if onBoard(x - 1, y) andalso tile(x - 1, y) = matchTile then count += floodFill(x - 1, y, c)
 	if onBoard(x, y + 1) andalso tile(x, y + 1) = matchTile then count += floodFill(x, y + 1, c)
 	if onBoard(x, y - 1) andalso tile(x, y - 1) = matchTile then count += floodFill(x, y - 1, c)
+	return count + 1 'should return at least 1 if nothing else is found
+end function
+
+function board_type.floodFill2(x as integer, y as integer, c as ulong, score as long) as integer
+	dim as integer count
+	dim as tile_type matchTile = type(BLOCK_PIECE, c)
+	'mark this tile, prevent resursive loop
+	tile(x, y).tType = BLOCK_MARKED
+	tile(x, y).score = score
+	'check neighbour tiles
+	if onBoard(x + 1, y) andalso tile(x + 1, y) = matchTile then count += floodFill2(x + 1, y, c, score)
+	if onBoard(x - 1, y) andalso tile(x - 1, y) = matchTile then count += floodFill2(x - 1, y, c, score)
+	if onBoard(x, y + 1) andalso tile(x, y + 1) = matchTile then count += floodFill2(x, y + 1, c, score)
+	if onBoard(x, y - 1) andalso tile(x, y - 1) = matchTile then count += floodFill2(x, y - 1, c, score)
 	return count + 1 'should return at least 1 if nothing else is found
 end function

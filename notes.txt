@@ -37,10 +37,9 @@ Start with dominoes, 2 colors, get 100 points, now clear board, next level: 3 co
 
 === To do ===
 
-Display rotation point
-Stop drop on <space> release? (needs multikey, not inkey)
-Show points overlay if score increased + sound
-Bonus point + message for clear field
+add nicer font
+show ghostPiece if:  menu enabled && in state: psActivePlay only
+Combo points, display how?
 Increase colors each level. What is a level? Clear field and >100 points? Or after time?
 Pause button + Screen change (darker)
 Tetro made: blend to backgrond/black
@@ -50,6 +49,7 @@ move gameloop to game.bi AND more stuff to board
 Korobeiniki music
 Sounds: piece droped, kicked, score, game over, down tick, etc.
 Ghost piece as option from menu / toggle bottom
+Menu options: ghost piece, rotation indicator, ...
 Blink tiles to be removed from board
 Better keyboard handling
 Color blind symbols
@@ -58,6 +58,10 @@ Clean up old stuff + improve coments
 allow pause in all states
 Nice fonts
 Highest score to file
+Stop drop on <space> release? (needs multikey, not inkey)
+Add fonts
+Bonus point + message for clear field
+High score + level
 
 === Rejected ===
 
