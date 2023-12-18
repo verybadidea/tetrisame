@@ -116,6 +116,7 @@ sub board_type.drawTile(x as integer, y as integer, tile as tile_type)
 				dim as long xOffset = (GRID_SIZE - FONT_W * len(scoreStr)) \ 2 + 1
 				dim as long yOffset = (GRID_SIZE - FONT_H) \ 2 + 2
 				draw string(xScrn + xOffset, yScrn + yOffset), scoreStr, c
+				'printSpecial3(xScrn + xOffset, yScrn + yOffset, scoreStr, c, &hff404040, &hff000000)
 			end if
 		case BLOCK_GHOST
 			c = tile.tColor

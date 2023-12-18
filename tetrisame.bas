@@ -21,11 +21,41 @@ const as integer FONT_W = 8, FONT_H = 16
 
 type menu_options
 	dim as boolean showNext = true
-	dim as boolean showGhost = true
+	dim as boolean showGhost = false
 	dim as boolean showRotPoint = true
 end type
 
 dim shared as menu_options menuOpt
+
+sub printSpecial2(x as long, y as long, text as string, c1 as ulong, c2 as ulong)
+	for yi as integer = -1 to +1
+		for xi as integer = -1 to +1
+			if (abs(xi) + abs(yi)) > 2 then continue for
+			if xi = 0 and yi = 0 then continue for
+			draw string(x+xi,y+yi), text, c2
+		next
+	next
+	draw string(x,y), text, c1
+end sub
+
+sub printSpecial3(x as long, y as long, text as string, c1 as ulong, c2 as ulong, c3 as ulong)
+	for yi as integer = -2 to +2
+		for xi as integer = -2 to +2
+			if (abs(xi) + abs(yi)) > 3 then continue for
+			if (abs(xi) < 1) and (abs(yi) < 2) then continue for
+			if (abs(yi) < 1) and (abs(xi) < 2) then continue for
+			draw string(x+xi,y+yi), text, c3
+		next
+	next
+	for yi as integer = -1 to +1
+		for xi as integer = -1 to +1
+			if (abs(xi) + abs(yi)) > 1 then continue for
+			if xi = 0 and yi = 0 then continue for
+			draw string(x+xi,y+yi), text, c2
+		next
+	next
+	draw string(x,y), text, c1
+end sub
 
 #include "inc/common.bi"
 #include "inc/int2d_sgl2d.bi"
@@ -54,5 +84,6 @@ game.gameOver()
 'sleep 1000,1
 
 'locate 4, 2: print "Game ended, press any key."
-draw string(10,50), "Game ended, press any key."
+'draw string(10,50), "Game ended, press any key."
+printSpecial3(10, 50, "Game ended, press any key.", &hffffffff, &hff404040, &hff000000)
 waitKeyCode()

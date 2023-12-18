@@ -220,10 +220,10 @@ sub game_type.drawScene()
 	if menuOpt.showNext then
 		showPieceFree(nextPiece, board.getInfo(3) + 50, 50, 32) 'NEXT piece indicator
 	end if
-	draw string(10,10), "Score: " & str(score)
-	draw string(10,30), "State: " & str(playState)
-	'locate 2, 2: print "Score:"; score;
-	'locate 4, 2: print "State:"; playState; '" " ;playStateStr(playState)
+	printSpecial3(10, 10, "Score: " & str(score), &hffffffff, &hff404040, &hff000000)
+	printSpecial3(10, 30, "State: " & str(playState), &hffffffff, &hff404040, &hff000000)
+	'draw string(10,10), "Score: " & str(score)
+	'draw string(10,30), "State: " & str(playState)
 	if activePiece.alive then drawPieceGrid(activePiece)
 	select case playState
 		case psPaused
